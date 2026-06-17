@@ -7,17 +7,10 @@ metadata:
     argocd.argoproj.io/sync-wave: "0"
 spec:
   project: default
-  source:
-    repoURL: https://charts.bitnami.com/bitnami
-    chart: postgresql
-    targetRevision: 16.x.x
-    helm:
-      valueFiles:
-        - $values/releases/data/postgresql/values.yaml
   sources:
     - repoURL: https://charts.bitnami.com/bitnami
       chart: postgresql
-      targetRevision: 16.x.x
+      targetRevision: 18.7.5
       helm:
         valueFiles:
           - $values/releases/data/postgresql/values.yaml
