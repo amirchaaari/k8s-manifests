@@ -18,22 +18,12 @@ volumeClaimTemplate:
     requests:
       storage: 10Gi
 
-esConfig:
-  elasticsearch.yml: |
-    xpack.security.enabled: true
-    xpack.security.transport.ssl.enabled: false
-    xpack.security.http.ssl.enabled: false
+# Let the chart handle security completely
+protocol: https
 
 extraEnvs:
-  - name: discovery.type
-    value: single-node
-  - name: cluster.initial_master_nodes
-    value: ""
   - name: ELASTIC_PASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: elasticsearch-credentials
-        key: password
+    value: "elastic_pass_2024"
 
 persistence:
   enabled: true
