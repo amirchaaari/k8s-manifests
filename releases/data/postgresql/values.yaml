@@ -1,0 +1,47 @@
+auth:
+  database: apim_incidents
+  username: apim_user
+  password: apim_pass_2024
+  postgresPassword: postgres_root_2024
+
+primary:
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+  persistence:
+    enabled: true
+    size: 5Gi
+
+  initdb:
+    scripts:
+      init.sql: |
+        CREATE TABLE IF NOT EXISTS rules (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          description TEXT,
+          condition JSONB,
+          enabled BOOLEAN DEFAULT true,
+          created_at TIMESTAMP DEFAULT NOW()
+        );
+
+        CREATE TABLE IF NOT EXISTS incidents (
+          id SERIAL PRIMARY KEY,
+          rule_id INTEGER REFERENCES rules(id),
+          api_name VARCHAR(255),
+          severity VARCHAR(50),
+          message TEXT,
+          status VARCHAR(50) DEFAULT 'open',
+          created_at TIMESTAMP DEFAULT NOW()
+        );
+
+        CREATE TABLE IF NOT EXISTS notification_channels (
+          id SERIAL PRIMARY KEY,
+          type VARCHAR(50),
+          config JSONB,
+          enabled BOOLEAN DEFAULT true
+        );

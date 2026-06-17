@@ -8,12 +8,22 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/amirchaaari/k8s-manifests.git
-    targetRevision: HEAD
-    path: releases/data/postgresql
+    repoURL: https://charts.bitnami.com/bitnami
+    chart: postgresql
+    targetRevision: 16.x.x
     helm:
       valueFiles:
-        - values.yaml
+        - $values/releases/data/postgresql/values.yaml
+  sources:
+    - repoURL: https://charts.bitnami.com/bitnami
+      chart: postgresql
+      targetRevision: 16.x.x
+      helm:
+        valueFiles:
+          - $values/releases/data/postgresql/values.yaml
+    - repoURL: https://github.com/amirchaaari/k8s-manifests.git
+      targetRevision: HEAD
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: data
