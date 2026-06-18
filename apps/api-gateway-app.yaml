@@ -9,7 +9,7 @@ spec:
   project: default
   sources:
     - repoURL: https://github.com/wso2/helm-apim.git
-      targetRevision: main
+      targetRevision: 4.6.x
       path: all-in-one
       helm:
         valueFiles:
