@@ -9,7 +9,6 @@ wso2:
       adminPassword: "admin123"
       encryption:
         key: "da5a4cf0765600a9ba2be3ad8c393c2ab155cf0028b2f46524883246725a9ed3"
-
       databases:
         type: "h2"
         jdbc:
@@ -22,7 +21,6 @@ wso2:
           url: "jdbc:h2:./repository/database/WSO2SHARED_DB;DB_CLOSE_ON_EXIT=FALSE"
           username: "wso2carbon"
           password: "wso2carbon"
-
       security:
         keystores:
           tls:
@@ -32,6 +30,21 @@ wso2:
         truststore:
           password: "wso2carbon"
 
+    # Fix using internal Kubernetes Service DNS instead of localhost
+    tomlConfig: |
+      [[apim.key_manager]]
+      name = "Resident Key Manager"
+      type = "Resident"
+      description = "Resident Key Manager using internal K8s cluster DNS"
+      enabled = true
+      service_url = "https://api-gateway-wso2am-all-in-one-am-service.api-gateway.svc.cluster.local:9443/services/"
+      token_endpoint = "https://api-gateway-wso2am-all-in-one-am-service.api-gateway.svc.cluster.local:9443/oauth2/token"
+      revoke_endpoint = "https://api-gateway-wso2am-all-in-one-am-service.api-gateway.svc.cluster.local:9443/oauth2/revoke"
+      userinfo_endpoint = "https://api-gateway-wso2am-all-in-one-am-service.api-gateway.svc.cluster.local:9443/oauth2/userinfo"
+      authorize_endpoint = "https://api-gateway-wso2am-all-in-one-am-service.api-gateway.svc.cluster.local:9443/oauth2/authorize"
+      jwks_endpoint = "https://api-gateway-wso2am-all-in-one-am-service.api-gateway.svc.cluster.local:9443/oauth2/jwks"
+      well_known_endpoint = "https://api-gateway-wso2am-all-in-one-am-service.api-gateway.svc.cluster.local:9443/oauth2/token/.well-known/openid-configuration"
+
   deployment:
     image:
       registry: "docker.io"
@@ -40,7 +53,6 @@ wso2:
       imagePullPolicy: IfNotPresent
       imagePullSecrets:
         enabled: false
-
     resources:
       requests:
         memory: "2Gi"
@@ -52,17 +64,14 @@ wso2:
         memory:
           xms: "2048m"
           xmx: "2048m"
-
     startupProbe:
       initialDelaySeconds: 60
       periodSeconds: 15
       failureThreshold: 20
-
     livenessProbe:
       initialDelaySeconds: 180
       periodSeconds: 15
       failureThreshold: 5
-
     readinessProbe:
       initialDelaySeconds: 180
       periodSeconds: 15
