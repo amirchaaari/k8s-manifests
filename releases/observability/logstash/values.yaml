@@ -1,0 +1,86 @@
+replicas: 1
+
+image: docker.elastic.co/logstash/logstash
+imageTag: 8.5.1
+
+resources:
+  requests:
+    cpu: "500m"
+    memory: "1Gi"
+  limits:
+    cpu: "1000m"
+    memory: "1536Mi"
+
+# Logstash pipeline — receive from Filebeat, parse, send to ES
+logstashPipeline:
+  logstash.conf: |
+    input {
+      beats {
+        port => 5044
+      }
+    }
+
+    filter {
+      if [fields][log_type] == "wso2-apim" {
+        grok {
+          match => {
+            "message" => "\[%{TIMESTAMP_ISO8601:timestamp}\] INFO - %{DATA:api_name} \| %{DATA:api_version} \| %{DATA:consumer_key} \| %{DATA:context} \| %{DATA:resource_path} \| %{DATA:resource} \| %{DATA:http_method} \| %{NUMBER:response_code} \| %{NUMBER:response_time} \| %{NUMBER:request_count}"
+          }
+        }
+        date {
+          match => ["timestamp", "ISO8601"]
+          target => "@timestamp"
+        }
+        mutate {
+          convert => {
+            "response_code"  => "integer"
+            "response_time"  => "float"
+            "request_count"  => "integer"
+          }
+          add_field => { "environment" => "internship" }
+        }
+      }
+    }
+
+    output {
+      elasticsearch {
+        hosts => ["https://elasticsearch-master:9200"]
+        index => "wso2-apim-logs-%{+YYYY.MM.dd}"
+        user => "elastic"
+        password => "${ELASTIC_PASSWORD}"
+        cacert => "/usr/share/logstash/config/certs/ca.crt"
+        ssl => true
+        ssl_certificate_verification => true
+      }
+    }
+
+# Logstash JVM settings
+logstashJavaOpts: "-Xmx768m -Xms768m"
+
+# Pass ES password as env var
+extraEnvs:
+  - name: ELASTIC_PASSWORD
+    value: "elastic_pass_2024"
+
+# Mount the ES CA cert
+extraVolumes:
+  - name: es-ca-cert
+    secret:
+      secretName: es-ca-cert
+
+extraVolumeMounts:
+  - name: es-ca-cert
+    mountPath: /usr/share/logstash/config/certs
+    readOnly: true
+
+# Expose Beats input port
+service:
+  type: ClusterIP
+  ports:
+    - name: beats
+      port: 5044
+      protocol: TCP
+      targetPort: 5044
+
+persistence:
+  enabled: false
