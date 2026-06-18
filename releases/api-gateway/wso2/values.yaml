@@ -30,19 +30,20 @@ wso2:
         truststore:
           password: "wso2carbon"
 
+    # Map endpoints to your actual public NodePort endpoint so login handshakes match
     tomlConfig: |
       [[apim.key_manager]]
       name = "Resident Key Manager"
       type = "Resident"
-      description = "Resident Key Manager using internal loop"
+      description = "Resident Key Manager using GKE NodePort"
       enabled = true
-      service_url = "https://localhost:9443/services/"
-      token_endpoint = "https://localhost:9443/oauth2/token"
-      revoke_endpoint = "https://localhost:9443/oauth2/revoke"
-      userinfo_endpoint = "https://localhost:9443/oauth2/userinfo"
-      authorize_endpoint = "https://localhost:9443/oauth2/authorize"
-      jwks_endpoint = "https://localhost:9443/oauth2/jwks"
-      well_known_endpoint = "https://localhost:9443/oauth2/token/.well-known/openid-configuration"
+      service_url = "https://34.72.109.210:31413/services/"
+      token_endpoint = "https://34.72.109.210:31413/oauth2/token"
+      revoke_endpoint = "https://34.72.109.210:31413/oauth2/revoke"
+      userinfo_endpoint = "https://34.72.109.210:31413/oauth2/userinfo"
+      authorize_endpoint = "https://34.72.109.210:31413/oauth2/authorize"
+      jwks_endpoint = "https://34.72.109.210:31413/oauth2/jwks"
+      well_known_endpoint = "https://34.72.109.210:31413/oauth2/token/.well-known/openid-configuration"
 
   deployment:
     persistence:
@@ -81,7 +82,6 @@ wso2:
       periodSeconds: 15
       failureThreshold: 5
 
-# --- SWITCH TO NODEPORT ---
 kubernetes:
   gatewayAPI:
     enabled: false
