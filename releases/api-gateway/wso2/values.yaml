@@ -34,22 +34,22 @@ wso2:
       [[apim.key_manager]]
       name = "Resident Key Manager"
       type = "Resident"
-      description = "Resident Key Manager using internal K8s cluster DNS"
+      description = "Resident Key Manager using internal loop"
       enabled = true
-      service_url = "https://api-gateway-wso2am-all-in-one-am-service.api-gateway.svc.cluster.local:9443/services/"
-      token_endpoint = "https://api-gateway-wso2am-all-in-one-am-service.api-gateway.svc.cluster.local:9443/oauth2/token"
-      revoke_endpoint = "https://api-gateway-wso2am-all-in-one-am-service.api-gateway.svc.cluster.local:9443/oauth2/revoke"
-      userinfo_endpoint = "https://api-gateway-wso2am-all-in-one-am-service.api-gateway.svc.cluster.local:9443/oauth2/userinfo"
-      authorize_endpoint = "https://api-gateway-wso2am-all-in-one-am-service.api-gateway.svc.cluster.local:9443/oauth2/authorize"
-      jwks_endpoint = "https://api-gateway-wso2am-all-in-one-am-service.api-gateway.svc.cluster.local:9443/oauth2/jwks"
-      well_known_endpoint = "https://api-gateway-wso2am-all-in-one-am-service.api-gateway.svc.cluster.local:9443/oauth2/token/.well-known/openid-configuration"
+      service_url = "https://localhost:9443/services/"
+      token_endpoint = "https://localhost:9443/oauth2/token"
+      revoke_endpoint = "https://localhost:9443/oauth2/revoke"
+      userinfo_endpoint = "https://localhost:9443/oauth2/userinfo"
+      authorize_endpoint = "https://localhost:9443/oauth2/authorize"
+      jwks_endpoint = "https://localhost:9443/oauth2/jwks"
+      well_known_endpoint = "https://localhost:9443/oauth2/token/.well-known/openid-configuration"
 
   deployment:
-    # --- Persistence Enabled ---
-    persistentRuntimeArtifacts:
+    persistence:
       enabled: true
       storageClass: "standard-rwo"
-      size: 10Gi
+      size: "10Gi"
+      accessMode: "ReadWriteOnce"
     image:
       registry: "docker.io"
       repository: "wso2/wso2am"
@@ -81,17 +81,11 @@ wso2:
       periodSeconds: 15
       failureThreshold: 5
 
+# --- SWITCH TO NODEPORT ---
 kubernetes:
   gatewayAPI:
-    enabled: true
-    gatewayName: "wso2am-gateway"
-    management:
-      enabled: true
-      hostname: "am.wso2.com"
-    gateway:
-      enabled: true
-      hostname: "gw.wso2.com"
-    websocket:
-      enabled: false
-    websub:
-      enabled: false
+    enabled: false
+  ingress:
+    enabled: false
+  service:
+    type: "NodePort"
