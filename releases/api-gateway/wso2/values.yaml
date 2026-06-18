@@ -30,7 +30,6 @@ wso2:
         truststore:
           password: "wso2carbon"
 
-    # Fix using internal Kubernetes Service DNS instead of localhost
     tomlConfig: |
       [[apim.key_manager]]
       name = "Resident Key Manager"
@@ -46,6 +45,11 @@ wso2:
       well_known_endpoint = "https://api-gateway-wso2am-all-in-one-am-service.api-gateway.svc.cluster.local:9443/oauth2/token/.well-known/openid-configuration"
 
   deployment:
+    # --- Persistence Enabled ---
+    persistentRuntimeArtifacts:
+      enabled: true
+      storageClass: "standard-rwo"
+      size: 10Gi
     image:
       registry: "docker.io"
       repository: "wso2/wso2am"
