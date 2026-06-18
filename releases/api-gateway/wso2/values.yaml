@@ -1,0 +1,35 @@
+wso2:
+  apim:
+    configurations:
+      adminUsername: "admin"
+      adminPassword: "admin123"
+      encryption:
+        key: "da5a4cf0765600a9ba2be3ad8c393c2ab155cf0028b2f46524883246725a9ed3"
+
+  deployment:
+    resources:
+      requests:
+        memory: "2Gi"
+        cpu: "1000m"
+      limits:
+        memory: "3Gi"
+        cpu: "2000m"
+
+kubernetes:
+  ingress:
+    management:
+      enabled: false
+    gateway:
+      enabled: false
+    websocket:
+      enabled: false
+    websub:
+      enabled: false
+  gatewayAPI:
+    enabled: true
+    management:
+      enabled: true
+      hostname: "am.wso2.com"
+    gateway:
+      enabled: true
+      hostname: "gw.wso2.com"
