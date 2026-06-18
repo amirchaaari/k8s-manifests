@@ -7,6 +7,13 @@ wso2:
         key: "da5a4cf0765600a9ba2be3ad8c393c2ab155cf0028b2f46524883246725a9ed3"
 
   deployment:
+    image:
+      registry: "docker.io"
+      repository: "wso2/wso2am"
+      tag: "4.6.0"
+      imagePullSecrets:
+        enabled: false
+
     resources:
       requests:
         memory: "2Gi"
