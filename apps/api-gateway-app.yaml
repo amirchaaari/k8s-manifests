@@ -1,28 +1,28 @@
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: api-gateway
-  namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "3"
-spec:
-  project: default
-  sources:
-    - repoURL: https://github.com/wso2/helm-apim.git
-      targetRevision: 4.6.x
-      path: all-in-one
-      helm:
-        valueFiles:
-          - $values/releases/api-gateway/wso2/values.yaml
-    - repoURL: https://github.com/amirchaaari/k8s-manifests.git
-      targetRevision: HEAD
-      ref: values
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: api-gateway
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: api-gateway
+#   namespace: argocd
+#   annotations:
+#     argocd.argoproj.io/sync-wave: "3"
+# spec:
+#   project: default
+#   sources:
+#     - repoURL: https://github.com/wso2/helm-apim.git
+#       targetRevision: 4.6.x
+#       path: all-in-one
+#       helm:
+#         valueFiles:
+#           - $values/releases/api-gateway/wso2/values.yaml
+#     - repoURL: https://github.com/amirchaaari/k8s-manifests.git
+#       targetRevision: HEAD
+#       ref: values
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: api-gateway
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: true
+#     syncOptions:
+#       - CreateNamespace=true
