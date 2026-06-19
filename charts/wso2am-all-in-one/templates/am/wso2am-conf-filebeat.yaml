@@ -1,0 +1,35 @@
+{{- if .Values.wso2.filebeat.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "am-all-in-one.fullname" . }}-filebeat-conf
+  namespace: {{ .Release.Namespace }}
+data:
+  filebeat.yml: |
+    filebeat.inputs:
+      - type: filestream
+        id: apim-metrics
+        enabled: true
+        paths:
+          - /var/log/wso2apim/apim_metrics.log
+        include_lines: ['apimMetrics']
+
+      - type: filestream
+        id: audit-log
+        enabled: true
+        paths:
+          - /var/log/wso2apim/audit.log
+
+      - type: filestream
+        id: wso2-traces
+        enabled: true
+        paths:
+          - /var/log/wso2apim/wso2-apimgt-open-tracing.log
+
+    output.logstash:
+      hosts:
+        - "{{ .Values.wso2.filebeat.logstashHost }}:{{ .Values.wso2.filebeat.logstashPort }}"
+
+    logging.level: info
+    logging.to_files: false
+{{- end }}

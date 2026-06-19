@@ -13,42 +13,212 @@ resources:
 
 logstashPipeline:
   logstash.conf: |
+    # ============================
+    # INPUT
+    # ============================
     input {
       beats {
         port => 5044
       }
     }
 
+    # ============================
+    # FILTER
+    # ============================
     filter {
-      if [fields][log_type] == "wso2-apim" {
+
+      # ----------------------------
+      # APIM METRICS
+      # ----------------------------
+      if [message] =~ /apimMetrics:/ {
         grok {
-          match => {
-            "message" => "\[%{TIMESTAMP_ISO8601:timestamp}\] INFO - %{DATA:api_name} \| %{DATA:api_version} \| %{DATA:consumer_key} \| %{DATA:context} \| %{DATA:resource_path} \| %{DATA:resource} \| %{DATA:http_method} \| %{NUMBER:response_code} \| %{NUMBER:response_time} \| %{NUMBER:request_count}"
+          match => [
+            "message",
+            "%{GREEDYDATA:UNWANTED} apimMetrics:%{GREEDYDATA:apimMetrics}, %{GREEDYDATA:UNWANTED} :%{GREEDYDATA:properties}"
+          ]
+        }
+
+        json {
+          source => "properties"
+        }
+      }
+
+      # ----------------------------
+      # AUDIT LOGS
+      # ----------------------------
+      else if [message] =~ /\{AUDIT_LOG\}/ {
+
+        grok {
+          match => [
+            "message",
+            "TID: \[%{DATA:tid}\] \[%{DATA:log_timestamp}\]\s+%{LOGLEVEL:level} \{AUDIT_LOG\} - %{GREEDYDATA:audit_content}"
+          ]
+        }
+
+        # ----------------------------
+        # HTTP DELETE
+        # ----------------------------
+        if [audit_content] =~ /^DELETE/ {
+          grok {
+            match => [
+              "audit_content",
+              "%{WORD:method} %{DATA:requestPath} user: %{DATA:userName} app: %{DATA:appId}"
+            ]
+          }
+          mutate {
+            add_field => {
+              "eventType"     => "delete_http"
+              "isDeleteEvent" => "false"
+            }
           }
         }
-        date {
-          match => ["timestamp", "ISO8601"]
-          target => "@timestamp"
-        }
-        mutate {
-          convert => {
-            "response_code" => "integer"
-            "response_time" => "float"
-            "request_count" => "integer"
+
+        # ----------------------------
+        # JSON DELETE CONFIRMATION
+        # ----------------------------
+        else if [audit_content] =~ /^\{/ {
+          json {
+            source => "audit_content"
           }
-          add_field => { "environment" => "internship" }
+          mutate { lowercase => ["action"] }
+
+          if [action] == "deleted" {
+            mutate {
+              add_field => {
+                "eventType"     => "delete_confirmed"
+                "isDeleteEvent" => "true"
+              }
+            }
+          }
+        }
+
+        # ----------------------------
+        # LOGIN ATTEMPT
+        # ----------------------------
+        else if [audit_content] =~ /Action : Login/ {
+          grok {
+            match => [
+              "audit_content",
+              "Initiator : %{DATA:initiator} \| Action : %{DATA:audit_action} \| Target : %{DATA:target} \| Data : %{DATA:data_raw} \| Result : %{GREEDYDATA:result}"
+            ]
+          }
+
+          json {
+            source => "data_raw"
+            target => "data"
+          }
+
+          mutate {
+            add_field => {
+              "eventType"           => "login_attempt"
+              "serviceProviderName" => "%{[data][ServiceProviderName]}"
+              "remoteAddress"       => "%{[data][RemoteAddress]}"
+              "userName"            => "%{initiator}"
+            }
+          }
+
+          if [result] =~ /Failed/ {
+            mutate { add_field => { "loginResult" => "failed" } }
+          } else {
+            mutate { add_field => { "loginResult" => "success" } }
+          }
+        }
+      }
+
+      # ============================
+      # WSO2 OPEN TELEMETRY TRACES
+      # ============================
+      else if [message] =~ /TRACE/ {
+
+        grok {
+          match => [
+            "message",
+            "%{TIME:trace_timestamp}\s+\[-\]\s+\[%{DATA:thread}\]\s+TRACE\s+%{GREEDYDATA:trace_json}"
+          ]
+        }
+
+        if [trace_json] {
+          json {
+            source => "trace_json"
+            remove_field => ["trace_json"]
+          }
+
+          mutate {
+            rename => {
+              "Tracer Id" => "trace_id"
+              "Span Id"   => "span_id"
+              "Operation" => "operation"
+              "Latency"   => "latency"
+              "Tags"      => "tags_json"
+            }
+          }
         }
       }
     }
 
+    # ============================
+    # OUTPUT
+    # ============================
     output {
-      elasticsearch {
-        hosts => ["https://elasticsearch-master:9200"]
-        index => "wso2-apim-logs-%{+YYYY.MM.dd}"
-        user => "elastic"
-        password => "${ELASTIC_PASSWORD}"
-        ssl => true
-        ssl_certificate_verification => false
+
+      # apim:response events
+      if [apimMetrics] == " apim:response" {
+        elasticsearch {
+          hosts => ["https://elasticsearch-master:9200"]
+          index => "apim_event_response"
+          user => "elastic"
+          password => "${ELASTIC_PASSWORD}"
+          ssl => true
+          ssl_certificate_verification => false
+        }
+      }
+
+      # apim:faulty events
+      else if [apimMetrics] == " apim:faulty" {
+        elasticsearch {
+          hosts => ["https://elasticsearch-master:9200"]
+          index => "apim_event_faulty"
+          user => "elastic"
+          password => "${ELASTIC_PASSWORD}"
+          ssl => true
+          ssl_certificate_verification => false
+        }
+      }
+
+      # audit delete confirmation
+      if [isDeleteEvent] == "true" {
+        elasticsearch {
+          hosts => ["https://elasticsearch-master:9200"]
+          index => "wso2_audit_delete"
+          user => "elastic"
+          password => "${ELASTIC_PASSWORD}"
+          ssl => true
+          ssl_certificate_verification => false
+        }
+      }
+
+      # login attempts
+      if [eventType] == "login_attempt" {
+        elasticsearch {
+          hosts => ["https://elasticsearch-master:9200"]
+          index => "wso2_audit_logs"
+          user => "elastic"
+          password => "${ELASTIC_PASSWORD}"
+          ssl => true
+          ssl_certificate_verification => false
+        }
+      }
+
+      # trace output
+      if [trace_id] {
+        elasticsearch {
+          hosts => ["https://elasticsearch-master:9200"]
+          index => "wso2_traces"
+          user => "elastic"
+          password => "${ELASTIC_PASSWORD}"
+          ssl => true
+          ssl_certificate_verification => false
+        }
       }
     }
 
