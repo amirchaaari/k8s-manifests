@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wso2-notifier-backend
+  namespace: application
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wso2-notifier-backend
+  template:
+    metadata:
+      labels:
+        app: wso2-notifier-backend
+    spec:
+      containers:
+      - name: backend
+        image: amirchaari/wso2-notifier-backend:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:postgresql://postgresql.data.svc:5432/wso2notifier
+        - name: SPRING_DATASOURCE_USERNAME
+          value: notifier
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: password
+        - name: ELASTICSEARCH_HOST
+          value: elasticsearch-master.observability.svc
+        - name: ELASTICSEARCH_PORT
+          value: "9200"
+        - name: ELASTICSEARCH_SCHEME
+          value: "https"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wso2-notifier-backend
+  namespace: application
+spec:
+  type: ClusterIP
+  selector:
+    app: wso2-notifier-backend
+  ports:
+  - port: 8080
+    targetPort: 8080
