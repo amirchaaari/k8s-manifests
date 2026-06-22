@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+data:
+  SMTP_HOST: {{ .Values.config.smtpHost | quote }}
+  SMTP_PORT: {{ .Values.config.smtpPort | quote }}
+  DB_URL: {{ .Values.config.dbUrl | quote }}
+  DB_USERNAME: {{ .Values.config.dbUsername | quote }}
+  ES_HOST: {{ .Values.config.esHost | quote }}
+  ES_PORT: {{ .Values.config.esPort | quote }}
+  ES_SCHEME: {{ .Values.config.esScheme | quote }}
+  ES_USERNAME: {{ .Values.config.esUsername | quote }}
+  ES_CA_CERT_PATH: {{ .Values.config.esCaCertPath | quote }}
+  AI_PROVIDER: {{ .Values.config.aiProvider | quote }}
+  ADMIN_DEFAULT_USERNAME: {{ .Values.config.adminDefaultUsername | quote }}
+  JWT_EXPIRATION_HOURS: {{ .Values.config.jwtExpirationHours | quote }}
+  WSO2_ADMIN_USERNAME: {{ .Values.config.wso2AdminUsername | quote }}
