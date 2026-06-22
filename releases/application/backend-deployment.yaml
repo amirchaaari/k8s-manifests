@@ -19,21 +19,104 @@ spec:
         ports:
         - containerPort: 8080
         env:
-        - name: SPRING_DATASOURCE_URL
+        # ── Database ─────────────────────────────────────────────────────────
+        - name: DB_URL
           value: jdbc:postgresql://postgresql.data.svc:5432/wso2notifier
-        - name: SPRING_DATASOURCE_USERNAME
+        - name: DB_USERNAME
           value: notifier
-        - name: SPRING_DATASOURCE_PASSWORD
+        - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: postgres-secret
-              key: password
-        - name: ELASTICSEARCH_HOST
+              name: app-secrets
+              key: db-password
+
+        # ── Elasticsearch ────────────────────────────────────────────────────
+        - name: ES_HOST
           value: elasticsearch-master.observability.svc
-        - name: ELASTICSEARCH_PORT
+        - name: ES_PORT
           value: "9200"
-        - name: ELASTICSEARCH_SCHEME
+        - name: ES_SCHEME
           value: "https"
+        - name: ES_USERNAME
+          value: elastic
+        - name: ES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: es-password
+        - name: ES_CA_CERT_PATH
+          value: /etc/es-certs/ca.crt
+
+        # ── JWT ──────────────────────────────────────────────────────────────
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: jwt-secret
+
+        # ── Admin default account ────────────────────────────────────────────
+        - name: ADMIN_DEFAULT_USERNAME
+          value: admin
+        - name: ADMIN_DEFAULT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: admin-password
+
+        # ── AI (Groq/Gemini) ─────────────────────────────────────────────────
+        - name: AI_PROVIDER
+          value: groq
+        - name: GROK_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: groq-api-key
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: gemini-api-key
+              optional: true
+
+        # ── SMTP (Mailtrap or real SMTP) ─────────────────────────────────────
+        - name: SMTP_HOST
+          value: sandbox.smtp.mailtrap.io
+        - name: SMTP_PORT
+          value: "2525"
+        - name: SMTP_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: smtp-username
+        - name: SMTP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: smtp-password
+
+        # ── WSO2 ─────────────────────────────────────────────────────────────
+        - name: WSO2_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: wso2-admin-password
+        - name: WSO2_DCR_URL
+          value: https://wso2am-service.wso2.svc:9443/client-registration/v0.17/register
+        - name: WSO2_TOKEN_URL
+          value: https://wso2am-service.wso2.svc:9443/oauth2/token
+        - name: WSO2_WORKFLOW_URL
+          value: https://wso2am-service.wso2.svc:9443/api/am/admin/v4/workflows
+
+        volumeMounts:
+        - name: es-ca-cert
+          mountPath: /etc/es-certs
+          readOnly: true
+
+      volumes:
+      - name: es-ca-cert
+        secret:
+          secretName: es-ca-cert
+
 ---
 apiVersion: v1
 kind: Service
