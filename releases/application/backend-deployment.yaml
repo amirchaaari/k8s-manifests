@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: amirchaari/wso2-notifier-backend:21
+        image: amirchaari/wso2-notifier-backend:22
         ports:
         - containerPort: 8080
         env:
