@@ -21,7 +21,7 @@ spec:
         env:
         # ── Database ─────────────────────────────────────────────────────────
         - name: DB_URL
-          value: jdbc:postgresql://postgresql.data.svc:5432/wso2_notifier
+          value: jdbc:postgresql://data-postgresql.data.svc:5432/wso2_notifier
         - name: DB_USERNAME
           value: postgres
         - name: DB_PASSWORD
