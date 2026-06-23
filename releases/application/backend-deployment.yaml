@@ -21,9 +21,9 @@ spec:
         env:
         # ── Database ─────────────────────────────────────────────────────────
         - name: DB_URL
-          value: jdbc:postgresql://data-postgresql.data.svc:5432/wso2notifier
+          value: jdbc:postgresql://data-postgresql.data.svc:5432/apim_incidents
         - name: DB_USERNAME
-          value: notifier
+          value: apim_user
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
