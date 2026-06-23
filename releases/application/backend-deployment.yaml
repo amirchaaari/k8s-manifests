@@ -32,7 +32,7 @@ spec:
 
         # ── Elasticsearch ────────────────────────────────────────────────────
         - name: ES_HOST
-          value: elasticsearch-master.elastic.svc
+          value: elasticsearch-master.observability.svc
         - name: ES_PORT
           value: "9200"
         - name: ES_SCHEME
