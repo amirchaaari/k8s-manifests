@@ -7,16 +7,10 @@ metadata:
     argocd.argoproj.io/sync-wave: "1"
 spec:
   project: default
-  sources:
-    - repoURL: https://helm.elastic.co
-      chart: elasticsearch
-      targetRevision: 8.5.1
-      helm:
-        valueFiles:
-          - $values/releases/observability/elasticsearch/values.yaml
-    - repoURL: https://github.com/amirchaaari/k8s-manifests.git
-      targetRevision: HEAD
-      ref: values
+  source:
+    repoURL: https://github.com/amirchaaari/k8s-manifests.git
+    targetRevision: HEAD
+    path: releases/observability/elasticsearch
   destination:
     server: https://kubernetes.default.svc
     namespace: observability
