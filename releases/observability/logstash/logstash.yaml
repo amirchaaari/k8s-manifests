@@ -1,0 +1,181 @@
+apiVersion: logstash.k8s.elastic.co/v1alpha1
+kind: Logstash
+metadata:
+  name: logstash
+  namespace: observability
+spec:
+  version: 9.0.0
+  count: 1
+  config:
+    xpack.monitoring.enabled: false
+    log.level: info
+  podTemplate:
+    spec:
+      containers:
+        - name: logstash
+          env:
+            # ECK-generated elastic password for the ES output
+            - name: ELASTIC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: elasticsearch-es-elastic-user
+                  key: elastic
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+            limits:
+              memory: 1536Mi
+  services:
+    - name: beats
+      service:
+        spec:
+          ports:
+            - port: 5044
+              name: beats
+              protocol: TCP
+  pipelines:
+    - pipeline.id: main
+      config.string: |
+        input {
+          beats {
+            port => 5044
+          }
+        }
+
+        filter {
+          # ---- APIM METRICS ----
+          if [message] =~ /apimMetrics:/ {
+            grok {
+              match => [
+                "message",
+                "%{GREEDYDATA:UNWANTED} apimMetrics:%{GREEDYDATA:apimMetrics}, %{GREEDYDATA:UNWANTED} :%{GREEDYDATA:properties}"
+              ]
+            }
+            json { source => "properties" }
+          }
+
+          # ---- AUDIT LOGS ----
+          else if [message] =~ /\{AUDIT_LOG\}/ {
+            grok {
+              match => [
+                "message",
+                "TID: \[%{DATA:tid}\] \[%{DATA:log_timestamp}\]\s+%{LOGLEVEL:level} \{AUDIT_LOG\} - %{GREEDYDATA:audit_content}"
+              ]
+            }
+
+            if [audit_content] =~ /^DELETE/ {
+              grok {
+                match => [
+                  "audit_content",
+                  "%{WORD:method} %{DATA:requestPath} user: %{DATA:userName} app: %{DATA:appId}"
+                ]
+              }
+              mutate { add_field => { "eventType" => "delete_http" "isDeleteEvent" => "false" } }
+            }
+            else if [audit_content] =~ /^\{/ {
+              json { source => "audit_content" }
+              mutate { lowercase => ["action"] }
+              if [action] == "deleted" {
+                mutate { add_field => { "eventType" => "delete_confirmed" "isDeleteEvent" => "true" } }
+              }
+            }
+            else if [audit_content] =~ /Action : Login/ {
+              grok {
+                match => [
+                  "audit_content",
+                  "Initiator : %{DATA:initiator} \| Action : %{DATA:audit_action} \| Target : %{DATA:target} \| Data : %{DATA:data_raw} \| Result : %{GREEDYDATA:result}"
+                ]
+              }
+              json { source => "data_raw" target => "data" }
+              mutate {
+                add_field => {
+                  "eventType"           => "login_attempt"
+                  "serviceProviderName" => "%{[data][ServiceProviderName]}"
+                  "remoteAddress"       => "%{[data][RemoteAddress]}"
+                  "userName"            => "%{initiator}"
+                }
+              }
+              if [result] =~ /Failed/ {
+                mutate { add_field => { "loginResult" => "failed" } }
+              } else {
+                mutate { add_field => { "loginResult" => "success" } }
+              }
+            }
+          }
+
+          # ---- OPEN TELEMETRY TRACES ----
+          else if [message] =~ /TRACE/ {
+            grok {
+              match => [
+                "message",
+                "%{TIME:trace_timestamp}\s+\[-\]\s+\[%{DATA:thread}\]\s+TRACE\s+%{GREEDYDATA:trace_json}"
+              ]
+            }
+            if [trace_json] {
+              json { source => "trace_json" remove_field => ["trace_json"] }
+              mutate {
+                rename => {
+                  "Tracer Id" => "trace_id"
+                  "Span Id"   => "span_id"
+                  "Operation" => "operation"
+                  "Latency"   => "latency"
+                  "Tags"      => "tags_json"
+                }
+              }
+            }
+          }
+        }
+
+        output {
+          if [apimMetrics] == " apim:response" {
+            elasticsearch {
+              hosts => ["https://elasticsearch-master:9200"]
+              index => "apim_event_response"
+              user => "elastic"
+              password => "${ELASTIC_PASSWORD}"
+              ssl_enabled => true
+              ssl_verification_mode => "none"
+            }
+          }
+          else if [apimMetrics] == " apim:faulty" {
+            elasticsearch {
+              hosts => ["https://elasticsearch-master:9200"]
+              index => "apim_event_faulty"
+              user => "elastic"
+              password => "${ELASTIC_PASSWORD}"
+              ssl_enabled => true
+              ssl_verification_mode => "none"
+            }
+          }
+          if [isDeleteEvent] == "true" {
+            elasticsearch {
+              hosts => ["https://elasticsearch-master:9200"]
+              index => "wso2_audit_delete"
+              user => "elastic"
+              password => "${ELASTIC_PASSWORD}"
+              ssl_enabled => true
+              ssl_verification_mode => "none"
+            }
+          }
+          if [eventType] == "login_attempt" {
+            elasticsearch {
+              hosts => ["https://elasticsearch-master:9200"]
+              index => "wso2_audit_logs"
+              user => "elastic"
+              password => "${ELASTIC_PASSWORD}"
+              ssl_enabled => true
+              ssl_verification_mode => "none"
+            }
+          }
+          if [trace_id] {
+            elasticsearch {
+              hosts => ["https://elasticsearch-master:9200"]
+              index => "wso2_traces"
+              user => "elastic"
+              password => "${ELASTIC_PASSWORD}"
+              ssl_enabled => true
+              ssl_verification_mode => "none"
+            }
+          }
+        }

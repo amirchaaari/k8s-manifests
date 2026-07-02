@@ -1,0 +1,15 @@
+# Shim Service keeping the "logstash-logstash" hostname stable so the Filebeat
+# sidecars (which target logstash-logstash:5044) don't need reconfiguring.
+apiVersion: v1
+kind: Service
+metadata:
+  name: logstash-logstash
+  namespace: observability
+spec:
+  selector:
+    logstash.k8s.elastic.co/name: logstash
+  ports:
+    - name: beats
+      port: 5044
+      targetPort: 5044
+      protocol: TCP
