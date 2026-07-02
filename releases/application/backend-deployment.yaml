@@ -19,6 +19,11 @@ spec:
         ports:
         - containerPort: 8080
         env:
+        # ── Server ───────────────────────────────────────────────────────────
+        # App's application.yml defaults to 8082; override to 8080 to match the
+        # containerPort / Service / ingress.
+        - name: SERVER_PORT
+          value: "8080"
         # ── Database ─────────────────────────────────────────────────────────
         - name: DB_URL
           value: jdbc:postgresql://data-postgresql.data.svc:5432/apim_incidents
