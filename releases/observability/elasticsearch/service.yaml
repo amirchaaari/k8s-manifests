@@ -1,0 +1,15 @@
+# Shim Service keeping the "elasticsearch-master" hostname stable so Logstash and
+# the backend don't need reconfiguring. Selects the ECK-managed ES pods.
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch-master
+  namespace: observability
+spec:
+  selector:
+    elasticsearch.k8s.elastic.co/cluster-name: elasticsearch
+  ports:
+    - name: https
+      port: 9200
+      targetPort: 9200
+      protocol: TCP
