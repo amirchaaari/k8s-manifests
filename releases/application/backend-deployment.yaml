@@ -101,11 +101,11 @@ spec:
               name: app-secrets
               key: wso2-admin-password
         - name: WSO2_DCR_URL
-          value: https://wso2am-service.wso2.svc:9443/client-registration/v0.17/register
+          value: https://apim-wso2am-all-in-one-am-service.wso2.svc:9443/client-registration/v0.17/register
         - name: WSO2_TOKEN_URL
-          value: https://wso2am-service.wso2.svc:9443/oauth2/token
+          value: https://apim-wso2am-all-in-one-am-service.wso2.svc:9443/oauth2/token
         - name: WSO2_WORKFLOW_URL
-          value: https://wso2am-service.wso2.svc:9443/api/am/admin/v4/workflows
+          value: https://apim-wso2am-all-in-one-am-service.wso2.svc:9443/api/am/admin/v4/workflows
 
         volumeMounts:
         - name: es-ca-cert

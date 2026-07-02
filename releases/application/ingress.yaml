@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wso2-notifier
+  namespace: application
+  annotations:
+    # Serve over plain HTTP (no forced HTTPS redirect) for the demo
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: notifier.wso2.com
+    http:
+      paths:
+      # API calls go straight to the Spring Boot backend (keeps the /api prefix).
+      # This bypasses the frontend image's baked-in nginx proxy (which points at
+      # the wrong namespace), so no frontend image rebuild is required.
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: wso2-notifier-backend
+            port:
+              number: 8080
+      # Everything else serves the React SPA.
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: wso2-notifier-frontend
+            port:
+              number: 80
