@@ -1,29 +1,29 @@
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: data
-  namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "0"
-spec:
-  project: default
-  sources:
-    - repoURL: https://charts.bitnami.com/bitnami
-      chart: postgresql
-      targetRevision: 18.7.5
-      helm:
-        valueFiles:
-          - $values/releases/data/postgresql/values.yaml
-    - repoURL: https://github.com/amirchaaari/k8s-manifests.git
-      targetRevision: HEAD
-      ref: values
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: data
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: data
+#   namespace: argocd
+#   annotations:
+#     argocd.argoproj.io/sync-wave: "0"
+# spec:
+#   project: default
+#   sources:
+#     - repoURL: https://charts.bitnami.com/bitnami
+#       chart: postgresql
+#       targetRevision: 18.7.5
+#       helm:
+#         valueFiles:
+#           - $values/releases/data/postgresql/values.yaml
+#     - repoURL: https://github.com/amirchaaari/k8s-manifests.git
+#       targetRevision: HEAD
+#       ref: values
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: data
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: true
+#     syncOptions:
+#       - CreateNamespace=true
 
