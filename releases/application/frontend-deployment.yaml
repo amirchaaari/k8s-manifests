@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: amirchaari/wso2-notifier-frontend:12
+        image: amirchaari/wso2-notifier-frontend:13
         ports:
         - containerPort: 80
 
