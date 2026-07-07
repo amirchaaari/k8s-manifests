@@ -3,11 +3,15 @@ kind: Ingress
 metadata:
   name: wso2-notifier
   namespace: application
-  annotations:
-    # Serve over plain HTTP (no forced HTTPS redirect) for the demo
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   ingressClassName: nginx
+  # TLS termination for the dashboard. Uses a self-signed cert in the "notifier-tls"
+  # secret (created out-of-band with kubectl, NOT in git). Browser warns until the
+  # cert is trusted; traffic is encrypted. HTTP now auto-redirects to HTTPS.
+  tls:
+    - hosts:
+        - notifier.wso2.com
+      secretName: notifier-tls
   rules:
   - host: notifier.wso2.com
     http:
