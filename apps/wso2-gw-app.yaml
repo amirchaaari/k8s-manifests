@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: wso2-gateway
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  project: default
+  sources:
+    # Source 1: The Helm chart (your modified WSO2 repo with Filebeat sidecar)
+    - repoURL: https://github.com/amirchaaari/helm_chart_wso2.git
+      targetRevision: HEAD
+      path: distributed/gateway
+      helm:
+        valueFiles:
+          - $values/releases/wso2/gateway/values.yaml
+    # Source 2: The values file (from your k8s-manifests GitOps repo)
+    - repoURL: https://github.com/amirchaaari/k8s-manifests.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: wso2
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
