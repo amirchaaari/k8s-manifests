@@ -1,30 +1,34 @@
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: wso2-gateway
-  namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "3"
-spec:
-  project: default
-  sources:
-    # Source 1: The Helm chart (your modified WSO2 repo with Filebeat sidecar)
-    - repoURL: https://github.com/amirchaaari/helm_chart_wso2.git
-      targetRevision: HEAD
-      path: distributed/gateway
-      helm:
-        valueFiles:
-          - $values/releases/wso2/gateway/values.yaml
-    # Source 2: The values file (from your k8s-manifests GitOps repo)
-    - repoURL: https://github.com/amirchaaari/k8s-manifests.git
-      targetRevision: HEAD
-      ref: values
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: wso2
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
+# Disabled: this pattern-2 (distributed gateway) deployment was competing for
+# cluster CPU with the still-live original "apim-gw" release, starving the
+# original apim release and causing 503s on am.wso2.com. Re-enable only after
+# the original apim/apim-gw release has been fully decommissioned.
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: wso2-gateway
+#   namespace: argocd
+#   annotations:
+#     argocd.argoproj.io/sync-wave: "3"
+# spec:
+#   project: default
+#   sources:
+#     # Source 1: The Helm chart (your modified WSO2 repo with Filebeat sidecar)
+#     - repoURL: https://github.com/amirchaaari/helm_chart_wso2.git
+#       targetRevision: HEAD
+#       path: distributed/gateway
+#       helm:
+#         valueFiles:
+#           - $values/releases/wso2/gateway/values.yaml
+#     # Source 2: The values file (from your k8s-manifests GitOps repo)
+#     - repoURL: https://github.com/amirchaaari/k8s-manifests.git
+#       targetRevision: HEAD
+#       ref: values
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: wso2
+#   syncPolicy:
+#     automated:
+#       prune: true
+#       selfHeal: true
+#     syncOptions:
+#       - CreateNamespace=true
