@@ -4,7 +4,7 @@ metadata:
   name: wso2-notifier-backend
   namespace: application
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: wso2-notifier-backend
@@ -76,6 +76,12 @@ spec:
             secretKeyRef:
               name: app-secrets
               key: groq-api-key
+        # Groq periodically retires/renames model IDs (they dropped Llama entirely
+        # for some accounts). Kept as a plain env var so it can be swapped without
+        # rebuilding the image — check `curl https://api.groq.com/openai/v1/models
+        # -H "Authorization: Bearer $GROQ_API_KEY"` if this ever starts 404ing again.
+        - name: GROQ_MODEL
+          value: openai/gpt-oss-120b
         - name: GEMINI_API_KEY
           valueFrom:
             secretKeyRef:

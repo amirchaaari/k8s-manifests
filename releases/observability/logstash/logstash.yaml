@@ -5,7 +5,7 @@ metadata:
   namespace: observability
 spec:
   version: 9.0.0
-  count: 1
+  count: 2
   config:
     xpack.monitoring.enabled: false
     log.level: info
